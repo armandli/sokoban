@@ -17,7 +17,6 @@ namespace fs = std::filesystem;
 
 namespace sokoban {
 
-
 using History = s::vector<BoardState>;
 
 class SokobanBoard {
@@ -26,9 +25,13 @@ class SokobanBoard {
   uset<Pt>   mGoals;
   BoardState mState;
   Pt         mMaxPt;
-  History&   mHistory;
+  History    mHistory;
+  bool       mDisableHistory;
+
+  friend int heuristic1(SokobanBoard&);
+  friend int heuristic2(SokobanBoard&);
 public:
-  SokobanBoard(const fs::path& bc_path, History& record): mMaxPt(0,0), mHistory(record) {
+  SokobanBoard(const fs::path& bc_path, bool disable_history=false): mMaxPt(0,0), mDisableHistory(disable_history) {
     s::ifstream source_file(bc_path.c_str());
     if (not source_file.is_open()) throw s::runtime_error(s::format("cannot open file {}", bc_path.native()));
 
@@ -95,14 +98,16 @@ public:
     if (mSpace.find(np) == mSpace.end() or mWalls.find(np) != mWalls.end())
       return false;
     if (mState.boxes.find(np) == mState.boxes.end()){
-      mHistory.push_back(mState);
+      if (not mDisableHistory)
+        mHistory.push_back(mState);
       mState.player = np;
       return true;
     } else {
       Pt nnp = np + dr;
       if (mSpace.find(nnp) == mSpace.end() or mWalls.find(nnp) != mWalls.end() or mState.boxes.find(nnp) != mState.boxes.end())
         return false;
-      mHistory.push_back(mState);
+      if (not mDisableHistory)
+        mHistory.push_back(mState);
       mState.player = np;
       mState.boxes.erase(np);
       mState.boxes.insert(nnp);
@@ -118,6 +123,7 @@ public:
   }
 
   void backtrack(int steps){
+    assert(mDisableHistory == false);
     assert(steps >= 0 and steps < mHistory.size());
 
     if (steps == 0) return;
@@ -128,7 +134,17 @@ public:
   }
 
   void set_state(const BoardState& st){
+    if (not mDisableHistory)
+      mHistory.push_back(mState);
     mState = st;
+  }
+
+  BoardState state() const {
+    return mState;
+  }
+
+  void clear_history(){
+    mHistory.clear();
   }
 
   void print(s::ostream& out) const {

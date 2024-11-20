@@ -28,8 +28,7 @@ int main(int argc, char* argv[]){
   s::this_thread::sleep_for(s::chrono::milliseconds(1000));
 
   fs::path source(argv[1]);
-  g::History history;
-  g::SokobanBoard game(source, history);
+  g::SokobanBoard game(source);
 
   initscr(); // initialize screen
   cbreak();  // disabling of buffering of typed characters
