@@ -28,6 +28,8 @@ int bfs(const fs::path& source){
     s::cout << "stepped=" << count << s::endl;
 
     game.set_state(state);
+    game.print(s::cout); s::cout << s::flush;
+
     if (game.is_terminal()) return count;
 
     for (g::Dr dr : g::DIRECTIONS){

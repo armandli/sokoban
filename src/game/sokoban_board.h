@@ -28,8 +28,15 @@ class SokobanBoard {
   History    mHistory;
   bool       mDisableHistory;
 
+  //TODO: think of a better way to declare these friends
+  friend bool is_stuck(SokobanBoard&, const Pt&);
+  friend int min_box_step(SokobanBoard&, const Pt&);
+  friend s::optional<s::vector<Dr>> min_player_step(SokobanBoard&, const Pt&);
+  friend uset<Pt> player_reach(SokobanBoard&);
   friend int heuristic1(SokobanBoard&);
   friend int heuristic2(SokobanBoard&);
+  friend int heuristic3(SokobanBoard&);
+  friend int heuristic4(SokobanBoard&);
 public:
   SokobanBoard(const fs::path& bc_path, bool disable_history=false): mMaxPt(0,0), mDisableHistory(disable_history) {
     s::ifstream source_file(bc_path.c_str());
@@ -119,6 +126,19 @@ public:
     for (const Pt& pt : mGoals)
       if (mState.boxes.find(pt) == mState.boxes.end())
         return false;
+    return true;
+  }
+
+  bool is_box_movable(const Pt& box, const Dr& dir){
+    assert(mState.boxes.find(box) != mState.boxes.end());
+
+    Pt nxt = box + dir;
+    Pt prv = box + opposite(dir);
+    if (mSpace.find(nxt) == mSpace.end())             return false;
+    if (mState.boxes.find(nxt) != mState.boxes.end()) return false;
+    if (mWalls.find(prv) != mWalls.end())             return false;
+    if (mSpace.find(prv) == mSpace.end())             return false;
+    if (mState.boxes.find(prv) != mState.boxes.end()) return false;
     return true;
   }
 

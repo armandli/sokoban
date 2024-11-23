@@ -32,19 +32,22 @@ struct NodeCmp {
   bool operator()(const Node& a, const Node& b){
     board.set_state(a.state);
     int va = heuristic(board);
-    //va += a.count;
+    va = va - a.count; // heuristic value is larger the better, count is smaller the better
     board.set_state(b.state);
     int vb = heuristic(board);
-    //vb += b.count;
-    return va > vb;
+    vb = vb - b.count; // heuristic value is larger the better, count is smaller the better
+
+    // prioritize bigger values
+    return va < vb;
   }
 };
 
 int astar(const fs::path& source){
   g::SokobanBoard game(source, true);
   uset<g::BoardState> visited;
-  NodeCmp<decltype(g::heuristic1)> comparator(g::heuristic1, game);
+  //NodeCmp<decltype(g::heuristic1)> comparator(g::heuristic1, game);
   //NodeCmp<decltype(g::heuristic2)> comparator(g::heuristic2, game);
+  NodeCmp<decltype(g::heuristic3)> comparator(g::heuristic3, game);
   s::priority_queue<Node, s::vector<Node>, decltype(comparator)> q(comparator);
   q.push(Node(game.state(), 0));
   visited.insert(game.state());
@@ -58,8 +61,9 @@ int astar(const fs::path& source){
     s::cout << "stepped=" << node.count << s::endl;
 
     game.set_state(node.state);
-    //game.print(s::cout);
-    //s::cout << s::flush;
+
+    game.print(s::cout);
+    s::cout << s::flush;
 
     if (game.is_terminal()){
       s::cout << "explored " << c << " nodes" << s::endl;
