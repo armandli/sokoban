@@ -5,6 +5,7 @@
 #include <sokoban_board.h>
 
 #include <cassert>
+#include <concepts>
 #include <optional>
 #include <utility>
 #include <queue>
@@ -16,6 +17,13 @@
 namespace s = std;
 
 namespace sokoban {
+
+// Any callable that accepts a SokobanBoard& and returns int satisfies Heuristic.
+// Free functions, functors (like Heuristic5), and lambdas all qualify.
+template <typename H>
+concept Heuristic =
+    s::invocable<H&, SokobanBoard&> and
+    s::same_as<s::invoke_result_t<H&, SokobanBoard&>, int>;
 
 int mandist(const Pt& a, const Pt& b){
   return abs(a.x - b.x) + abs(a.y - b.y);

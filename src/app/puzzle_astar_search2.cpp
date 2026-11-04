@@ -25,35 +25,18 @@ struct Node {
   Node(const so::BoardState& st, int c): state(st), count(c) {}
 };
 
-template <typename F>
-struct NodeCmp {
-  F* heuristic;
-  so::SokobanBoard& board;
-  NodeCmp(F* f, so::SokobanBoard& board): heuristic(f), board(board) {}
-  bool operator()(const Node& a, const Node& b){
-    board.set_state(a.state);
-    int va = (*heuristic)(board);
-    // heuristic value is larger the better, count is smaller the better
-    va -= a.count;
-    board.set_state(b.state);
-    int vb = (*heuristic)(board);
-    vb -= b.count;
-
-    // prioritize bigger values
-    return va < vb;
-  }
-};
-
 // using box move as node instead of player move
-int astar(const sf::path& source){
-  so::SokobanBoard game(source, true);
-  //NodeCmp<decltype(so::heuristic1)> comparator(so::heuristic1, game);
-  //NodeCmp<decltype(so::heuristic2)> comparator(so::heuristic2, game);
-  //NodeCmp<decltype(so::heuristic3)> comparator(so::heuristic3, game);
-  //NodeCmp<decltype(so::heuristic4)> comparator(so::heuristic4, game);
-  so::Heuristic5 h5(game);
-  NodeCmp<so::Heuristic5> comparator(&h5, game);
-  s::priority_queue<Node, s::vector<Node>, decltype(comparator)> q(comparator);
+template <so::Heuristic H>
+int astar(so::SokobanBoard& game, H& h){
+  auto cmp = [&game, &h](const Node& a, const Node& b){
+    game.set_state(a.state);
+    int va = h(game) - a.count;
+    game.set_state(b.state);
+    int vb = h(game) - b.count;
+    return va < vb;
+  };
+
+  s::priority_queue<Node, s::vector<Node>, decltype(cmp)> q(cmp);
   q.push(Node(game.state(), 0));
 
   s::set<s::pair<so::BoardState, int>> visited;
@@ -69,7 +52,6 @@ int astar(const sf::path& source){
     s::cout << "stepped=" << node.count << s::endl;
 
     game.set_state(node.state);
-
     game.print(s::cout); s::cout << s::flush;
 
     if (game.is_terminal()){
@@ -116,7 +98,14 @@ int main(int argc, char* argv[]){
   }
 
   sf::path source(argv[1]);
-  int steps = astar(source);
+  so::SokobanBoard game(source, true);
+
+  //int steps = astar(game, so::heuristic1);
+  //int steps = astar(game, so::heuristic2);
+  //int steps = astar(game, so::heuristic3);
+  //int steps = astar(game, so::heuristic4);
+  so::Heuristic5 h5(game);
+  int steps = astar(game, h5);
 
   s::cout << "solution in " << steps << s::endl;
 }
