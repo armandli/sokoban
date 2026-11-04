@@ -38,3 +38,24 @@ set_property(TARGET puzzle_astar_search2 PROPERTY CXX_STANDARD 26)
 
 target_link_libraries(puzzle_astar_search2 util)
 target_link_libraries(puzzle_astar_search2 game)
+
+# neural network training
+add_executable(puzzle_train puzzle_train.cpp)
+
+set_property(TARGET puzzle_train PROPERTY CXX_STANDARD 20)
+
+target_include_directories(puzzle_train SYSTEM PRIVATE ${TORCH_INCLUDE_DIRS})
+target_link_libraries(puzzle_train model)
+target_link_libraries(puzzle_train training)
+target_link_libraries(puzzle_train ${TORCH_LIBRARIES})
+target_compile_options(puzzle_train PRIVATE ${TORCH_CXX_FLAGS})
+
+# neural heuristic a* search
+add_executable(puzzle_astar_nn puzzle_astar_nn.cpp)
+
+set_property(TARGET puzzle_astar_nn PROPERTY CXX_STANDARD 20)
+
+target_include_directories(puzzle_astar_nn SYSTEM PRIVATE ${TORCH_INCLUDE_DIRS})
+target_link_libraries(puzzle_astar_nn model)
+target_link_libraries(puzzle_astar_nn ${TORCH_LIBRARIES})
+target_compile_options(puzzle_astar_nn PRIVATE ${TORCH_CXX_FLAGS})

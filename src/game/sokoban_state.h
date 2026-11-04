@@ -13,7 +13,7 @@ struct BoardState {
   uset<Pt>      boxes;
 };
 
-bool operator==(const BoardState& a, const BoardState& b){
+inline bool operator==(const BoardState& a, const BoardState& b){
   if (a.player != b.player) return false;
   if (a.boxes.size() != b.boxes.size()) return false;
   for (const Pt& pt : b.boxes)
@@ -21,11 +21,11 @@ bool operator==(const BoardState& a, const BoardState& b){
   return true;
 }
 
-bool operator!=(const BoardState& a, const BoardState& b){
+inline bool operator!=(const BoardState& a, const BoardState& b){
   return not operator==(a, b);
 }
 
-bool operator<(const BoardState& a, const BoardState& b){
+inline bool operator<(const BoardState& a, const BoardState& b){
   if (a.player < b.player)      return true;
   else if (b.player < a.player) return false;
 
@@ -41,7 +41,7 @@ bool operator<(const BoardState& a, const BoardState& b){
   return false;
 }
 
-size_t fnv1(const BoardState& st){
+inline size_t fnv1(const BoardState& st){
   uint32_t prime = 0x01000193;
   uint32_t h = 0x811c9dc5;
   s::hash<Pt> hasher;

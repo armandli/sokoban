@@ -1,3 +1,5 @@
 add_subdirectory(util)
 add_subdirectory(game)
+add_subdirectory(model)
+add_subdirectory(training)
 add_subdirectory(app)

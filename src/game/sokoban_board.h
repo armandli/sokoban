@@ -90,8 +90,46 @@ struct SokobanBoard {
     mMaxPt.x = row_id;
   }
 
-  Pt size() const {
-    return mMaxPt;
+  Pt size() const { return mMaxPt; }
+
+  const uset<Pt>& walls()  const { return mWalls; }
+  const uset<Pt>& goals()  const { return mGoals; }
+  const uset<Pt>& spaces() const { return mSpace; }
+
+  // Construct the goal state: one box per goal, player at the first free space
+  // scanned in row-major order.  Used as the seed for backward training walks.
+  BoardState goal_state() const {
+    BoardState gs;
+    for (const Pt& g : mGoals)
+      gs.boxes.insert(g);
+    for (sint r = 0; r < mMaxPt.x; ++r)
+      for (sint c = 0; c < mMaxPt.y; ++c) {
+        Pt p(r, c);
+        if (mSpace.find(p) != mSpace.end() and
+            mGoals.find(p) == mGoals.end()) {
+          gs.player = p;
+          return gs;
+        }
+      }
+    // fallback: player on first goal (shouldn't be needed on well-formed boards)
+    gs.player = *mGoals.begin();
+    return gs;
+  }
+
+  // Reverse move: pull box from `box` in direction `dir`
+  // (box moves from `box` to `box + opposite(dir)`).
+  // Player is placed at `box` (the old box position).
+  // Used to generate training states via backward random walks.
+  // Returns false if the destination is a wall, out of bounds, or occupied.
+  bool pull_box(const Pt& box, const Dr& dir) {
+    assert(mState.boxes.find(box) != mState.boxes.end());
+    Pt dest = box + opposite(dir);
+    if (mSpace.find(dest) == mSpace.end())             return false;
+    if (mState.boxes.find(dest) != mState.boxes.end()) return false;
+    mState.boxes.erase(box);
+    mState.boxes.insert(dest);
+    mState.player = box;
+    return true;
   }
 
   bool play(const Dr& dr){

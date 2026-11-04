@@ -5,6 +5,10 @@ project(sokoban)
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+set(TORCH_PATH "/home/armandli/alphago_zero/libtorch"
+    CACHE PATH "Path to libtorch installation")
+find_package(Torch REQUIRED PATHS ${TORCH_PATH} NO_DEFAULT_PATH)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

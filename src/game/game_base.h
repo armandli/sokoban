@@ -62,7 +62,7 @@ constexpr Dr opposite(const Dr& d){
   }
 }
 
-s::ostream& operator<<(s::ostream& out, const Dr& d){
+inline s::ostream& operator<<(s::ostream& out, const Dr& d){
   switch (index(d)){
   case 0: out << "NORTH";
   break; case 1: out << "SOUTH";
@@ -90,30 +90,30 @@ constexpr size_t hash(const Pt& p){
   return ((ull)p.x << 16U) + (ull)p.y;
 }
 
-bool operator==(const Pt& a, const Pt& b){
+inline bool operator==(const Pt& a, const Pt& b){
   return a.x == b.x and a.y == b.y;
 }
 
-bool operator!=(const Pt& a, const Pt& b){
+inline bool operator!=(const Pt& a, const Pt& b){
   return not operator==(a, b);
 }
 
-bool operator<(const Pt& a, const Pt& b){
+inline bool operator<(const Pt& a, const Pt& b){
   if (a.x < b.x)      return true;
   else if (a.x > b.x) return false;
   else if (a.y < b.y) return true;
   else                return false;
 }
 
-Pt operator+(const Pt& p, const Dr& d){
+inline Pt operator+(const Pt& p, const Dr& d){
   return Pt(p.x+d.x, p.y+d.y);
 }
 
-Pt operator+(const Dr& d, const Pt& p){
+inline Pt operator+(const Dr& d, const Pt& p){
   return operator+(p, d);
 }
 
-s::ostream& operator<<(s::ostream& out, const Pt& pt){
+inline s::ostream& operator<<(s::ostream& out, const Pt& pt){
   out << "(" << pt.x << "," << pt.y << ")";
   return out;
 }
