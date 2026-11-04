@@ -140,7 +140,7 @@ struct SokobanBoard {
 
   void backtrack(int steps){
     assert(mDisableHistory == false);
-    assert(steps >= 0 and steps < (int)mHistory.size());
+    assert(steps >= 0 and steps <= (int)mHistory.size());
 
     if (steps == 0) return;
 

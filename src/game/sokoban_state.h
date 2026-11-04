@@ -15,6 +15,7 @@ struct BoardState {
 
 bool operator==(const BoardState& a, const BoardState& b){
   if (a.player != b.player) return false;
+  if (a.boxes.size() != b.boxes.size()) return false;
   for (const Pt& pt : b.boxes)
     if (a.boxes.find(pt) == a.boxes.end()) return false;
   return true;
@@ -35,7 +36,7 @@ bool operator<(const BoardState& a, const BoardState& b){
        itera != s::end(a.boxes) and iterb != s::end(b.boxes);
        ++itera, ++iterb){
     if (*itera < *iterb)      return true;
-    else if (*iterb < *iterb) return false;
+    else if (*iterb < *itera) return false;
   }
   return false;
 }
@@ -46,10 +47,11 @@ size_t fnv1(const BoardState& st){
   s::hash<Pt> hasher;
   h ^= hasher(st.player);
   h *= prime;
-  for (auto iter = s::begin(st.boxes); iter != s::end(st.boxes); ++iter){
-    h ^= hasher(*iter);
-    h *= prime;
-  }
+  uint32_t box_hash = 0;
+  for (const Pt& box : st.boxes)
+    box_hash ^= hasher(box);
+  h ^= box_hash;
+  h *= prime;
   return h;
 }
 
