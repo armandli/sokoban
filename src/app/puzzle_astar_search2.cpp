@@ -32,11 +32,11 @@ struct NodeCmp {
   NodeCmp(F* f, so::SokobanBoard& board): heuristic(f), board(board) {}
   bool operator()(const Node& a, const Node& b){
     board.set_state(a.state);
-    int va = heuristic(board);
+    int va = (*heuristic)(board);
     // heuristic value is larger the better, count is smaller the better
     va -= a.count;
     board.set_state(b.state);
-    int vb = heuristic(board);
+    int vb = (*heuristic)(board);
     vb -= b.count;
 
     // prioritize bigger values
@@ -50,7 +50,9 @@ int astar(const sf::path& source){
   //NodeCmp<decltype(so::heuristic1)> comparator(so::heuristic1, game);
   //NodeCmp<decltype(so::heuristic2)> comparator(so::heuristic2, game);
   //NodeCmp<decltype(so::heuristic3)> comparator(so::heuristic3, game);
-  NodeCmp<decltype(so::heuristic4)> comparator(so::heuristic4, game);
+  //NodeCmp<decltype(so::heuristic4)> comparator(so::heuristic4, game);
+  so::Heuristic5 h5(game);
+  NodeCmp<so::Heuristic5> comparator(&h5, game);
   s::priority_queue<Node, s::vector<Node>, decltype(comparator)> q(comparator);
   q.push(Node(game.state(), 0));
 

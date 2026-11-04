@@ -193,6 +193,7 @@ private:
   friend int heuristic2(SokobanBoard&);
   friend int heuristic3(SokobanBoard&);
   friend int heuristic4(SokobanBoard&);
+  friend struct Heuristic5;
 
   uset<Pt>   mSpace;
   uset<Pt>   mWalls;

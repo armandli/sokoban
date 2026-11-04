@@ -8,6 +8,10 @@
 #include <optional>
 #include <utility>
 #include <queue>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <numeric>
 
 namespace s = std;
 
@@ -176,6 +180,82 @@ int heuristic4(SokobanBoard& board){
   }
   return sum * -1;
 }
+
+// Minimum-cost bipartite matching heuristic with precomputed distance table.
+//
+// Precomputes, once per board, a BFS distance from every cell to every goal
+// (ignoring other boxes so the values are valid lower bounds).  Each call then
+// does only O(n^2) table lookups + O(n!) permutations for the matching.
+//
+// Two improvements over heuristic4:
+//   1. No two boxes are assigned the same goal (tighter lower bound).
+//   2. Distances ignore movable boxes (admissible; heuristic4 can overestimate
+//      when a box blocks the only path to a goal).
+struct Heuristic5 {
+  s::vector<Pt> goals;
+  // dist[j] maps cell -> min box-pushes from that cell to goals[j]
+  s::vector<s::unordered_map<Pt, int, s::hash<Pt>>> dist;
+
+  explicit Heuristic5(SokobanBoard& board)
+  : goals(board.mGoals.begin(), board.mGoals.end()),
+    dist(goals.size()) {
+    // BFS backward from each goal through the box-movement graph.
+    // Symmetric model: cost(A->B) == cost(B->A) when other boxes are ignored.
+    for (int j = 0; j < (int)goals.size(); j++){
+      s::queue<s::pair<Pt, int>> q;
+      q.push({goals[j], 0});
+      dist[j][goals[j]] = 0;
+      while (not q.empty()){
+        auto [loc, cnt] = q.front(); q.pop();
+        for (const Dr& dir : DIRECTIONS){
+          Pt nb = loc + dir;
+          if (dist[j].count(nb)) continue;
+          if (board.mSpace.find(nb) == board.mSpace.end()) continue;
+          // prune wall-stuck non-goal cells — a box there can never leave
+          if (is_stuck(board, nb) and board.mGoals.find(nb) == board.mGoals.end())
+            continue;
+          dist[j][nb] = cnt + 1;
+          q.push({nb, cnt + 1});
+        }
+      }
+    }
+  }
+
+  int operator()(SokobanBoard& board){
+    s::vector<Pt> boxes(board.mState.boxes.begin(), board.mState.boxes.end());
+    int n = (int)boxes.size();
+
+    s::vector<s::vector<int>> cost(n, s::vector<int>(n, 0x7F7F7F7F));
+    for (int i = 0; i < n; i++){
+      // stuck box not on a goal is a permanent deadlock
+      if (is_stuck(board, boxes[i]) and
+          board.mGoals.find(boxes[i]) == board.mGoals.end())
+        return -(int)0x7F7F7F7F;
+
+      for (int j = 0; j < n; j++){
+        auto it = dist[j].find(boxes[i]);
+        if (it != dist[j].end()) cost[i][j] = it->second;
+      }
+    }
+
+    // brute-force minimum cost perfect matching (n <= ~6, so n! is tiny)
+    s::vector<int> perm(n);
+    s::iota(perm.begin(), perm.end(), 0);
+    int min_cost = 0x7F7F7F7F;
+    do {
+      int total = 0;
+      bool valid = true;
+      for (int i = 0; i < n; i++){
+        if (cost[i][perm[i]] >= 0x7F7F7F7F){ valid = false; break; }
+        total += cost[i][perm[i]];
+      }
+      if (valid) min_cost = s::min(min_cost, total);
+    } while (s::next_permutation(perm.begin(), perm.end()));
+
+    if (min_cost >= 0x7F7F7F7F) return -(int)0x7F7F7F7F;
+    return -min_cost;
+  }
+};
 
 } // namespace sokoban
 
