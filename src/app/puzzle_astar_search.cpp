@@ -12,42 +12,43 @@
 
 #include <iostream>
 
-namespace s = std;
-namespace fs = std::filesystem;
-namespace g = sokoban;
+namespace s  = std;
+namespace sf = std::filesystem;
+namespace so = sokoban;
 
 struct Node {
-  g::BoardState state;
-  int           count;
+  so::BoardState state;
+  int            count;
 
   Node() = default;
-  Node(const g::BoardState& st, int c): state(st), count(c) {}
+  Node(const so::BoardState& st, int c): state(st), count(c) {}
 };
 
 template <typename F>
 struct NodeCmp {
   F* heuristic;
-  g::SokobanBoard& board;
-  NodeCmp(F* f, g::SokobanBoard& board): heuristic(f), board(board) {}
+  so::SokobanBoard& board;
+  NodeCmp(F* f, so::SokobanBoard& board): heuristic(f), board(board) {}
   bool operator()(const Node& a, const Node& b){
     board.set_state(a.state);
     int va = heuristic(board);
-    va = va - a.count; // heuristic value is larger the better, count is smaller the better
+    // heuristic value is larger the better, count is smaller the better
+    va -= a.count;
     board.set_state(b.state);
     int vb = heuristic(board);
-    vb = vb - b.count; // heuristic value is larger the better, count is smaller the better
+    vb -= b.count;
 
     // prioritize bigger values
     return va < vb;
   }
 };
 
-int astar(const fs::path& source){
-  g::SokobanBoard game(source, true);
-  uset<g::BoardState> visited;
-  //NodeCmp<decltype(g::heuristic1)> comparator(g::heuristic1, game);
-  //NodeCmp<decltype(g::heuristic2)> comparator(g::heuristic2, game);
-  NodeCmp<decltype(g::heuristic3)> comparator(g::heuristic3, game);
+int astar(const sf::path& source){
+  so::SokobanBoard game(source, true);
+  uset<so::BoardState> visited;
+  //NodeCmp<decltype(so::heuristic1)> comparator(so::heuristic1, game);
+  //NodeCmp<decltype(so::heuristic2)> comparator(so::heuristic2, game);
+  NodeCmp<decltype(so::heuristic3)> comparator(so::heuristic3, game);
   s::priority_queue<Node, s::vector<Node>, decltype(comparator)> q(comparator);
   q.push(Node(game.state(), 0));
   visited.insert(game.state());
@@ -70,12 +71,12 @@ int astar(const fs::path& source){
       return node.count;
     }
 
-    for (g::Dr dr : g::DIRECTIONS){
+    for (so::Dr dr : so::DIRECTIONS){
       game.set_state(node.state);
       bool diff = game.play(dr);
       if (not diff) continue;
 
-      g::BoardState st = game.state();
+      so::BoardState st = game.state();
       if (visited.find(st) != visited.end()) continue;
 
       visited.insert(st);
@@ -92,7 +93,7 @@ int main(int argc, char* argv[]){
     return 1;
   }
 
-  fs::path source(argv[1]);
+  sf::path source(argv[1]);
   int steps = astar(source);
 
   s::cout << "solution in " << steps << s::endl;

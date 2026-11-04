@@ -13,30 +13,31 @@
 
 #include <iostream>
 
-namespace s = std;
-namespace fs = std::filesystem;
-namespace g = sokoban;
+namespace s  = std;
+namespace sf = std::filesystem;
+namespace so = sokoban;
 
 struct Node {
-  g::BoardState state;
-  int           count;
+  so::BoardState state;
+  int            count;
 
   Node() = default;
-  Node(const g::BoardState& st, int c): state(st), count(c) {}
+  Node(const so::BoardState& st, int c): state(st), count(c) {}
 };
 
 template <typename F>
 struct NodeCmp {
   F* heuristic;
-  g::SokobanBoard& board;
-  NodeCmp(F* f, g::SokobanBoard& board): heuristic(f), board(board) {}
+  so::SokobanBoard& board;
+  NodeCmp(F* f, so::SokobanBoard& board): heuristic(f), board(board) {}
   bool operator()(const Node& a, const Node& b){
     board.set_state(a.state);
     int va = heuristic(board);
-    va = va - a.count; // heuristic value is larger the better, count is smaller the better
+    // heuristic value is larger the better, count is smaller the better
+    va -= a.count;
     board.set_state(b.state);
     int vb = heuristic(board);
-    vb = vb - b.count; // heuristic value is larger the better, count is smaller the better
+    vb -= b.count;
 
     // prioritize bigger values
     return va < vb;
@@ -44,16 +45,16 @@ struct NodeCmp {
 };
 
 // using box move as node instead of player move
-int astar(const fs::path& source){
-  g::SokobanBoard game(source, true);
-  //NodeCmp<decltype(g::heuristic1)> comparator(g::heuristic1, game);
-  //NodeCmp<decltype(g::heuristic2)> comparator(g::heuristic2, game);
-  //NodeCmp<decltype(g::heuristic3)> comparator(g::heuristic3, game);
-  NodeCmp<decltype(g::heuristic4)> comparator(g::heuristic4, game);
+int astar(const sf::path& source){
+  so::SokobanBoard game(source, true);
+  //NodeCmp<decltype(so::heuristic1)> comparator(so::heuristic1, game);
+  //NodeCmp<decltype(so::heuristic2)> comparator(so::heuristic2, game);
+  //NodeCmp<decltype(so::heuristic3)> comparator(so::heuristic3, game);
+  NodeCmp<decltype(so::heuristic4)> comparator(so::heuristic4, game);
   s::priority_queue<Node, s::vector<Node>, decltype(comparator)> q(comparator);
   q.push(Node(game.state(), 0));
 
-  s::set<s::pair<g::BoardState, int>> visited;
+  s::set<s::pair<so::BoardState, int>> visited;
   visited.insert(s::make_pair(game.state(), 0));
 
   int c = 0;
@@ -74,33 +75,32 @@ int astar(const fs::path& source){
       return node.count;
     }
 
-    for (const g::Pt& box : node.state.boxes){
-      for (const g::Dr& dir : g::DIRECTIONS){
+    for (const so::Pt& box : node.state.boxes){
+      for (const so::Dr& dir : so::DIRECTIONS){
         game.set_state(node.state);
 
         if (not game.is_box_movable(box, dir)){
           continue;
         }
 
-        g::Dr oppo_dir = g::opposite(dir);
-        s::optional<s::vector<g::Dr>> steps = g::min_player_step(game, box + oppo_dir);
+        so::Dr oppo_dir = so::opposite(dir);
+        s::optional<s::vector<so::Dr>> steps =
+          so::min_player_step(game, box + oppo_dir);
         if (not steps.has_value()){
           continue;
         }
 
-        for (const g::Dr& d : steps.value()){
+        for (const so::Dr& d : steps.value()){
           game.play(d);
         }
         game.play(dir);
 
-        g::BoardState st = game.state();
-        if (visited.find(s::make_pair(st, node.count+steps.value().size()+1)) != visited.end()){
-          continue;
-        }
+        so::BoardState st = game.state();
+        auto key = s::make_pair(st, node.count + (int)steps.value().size() + 1);
+        if (visited.find(key) != visited.end()) continue;
 
-        visited.insert(s::make_pair(st, node.count+steps.value().size()+1));
-
-        q.push(Node(st, node.count + steps.value().size() + 1));
+        visited.insert(key);
+        q.push(Node(st, node.count + (int)steps.value().size() + 1));
       }
     }
   }
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]){
     return 1;
   }
 
-  fs::path source(argv[1]);
+  sf::path source(argv[1]);
   int steps = astar(source);
 
   s::cout << "solution in " << steps << s::endl;

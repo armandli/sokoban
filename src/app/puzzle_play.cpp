@@ -14,36 +14,45 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
-namespace s = std;
-namespace fs = std::filesystem;
-namespace g = sokoban;
-using namespace ftxui;
+namespace s  = std;
+namespace sf = std::filesystem;
+namespace so = sokoban;
+namespace ft = ftxui;
 
-static Element render_board(g::SokobanBoard& game) {
+static ft::Element render_board(so::SokobanBoard& game) {
   s::stringstream ss;
   game.print(ss);
 
-  s::vector<Element> rows;
+  s::vector<ft::Element> rows;
   s::string line;
   while (s::getline(ss, line)) {
-    s::vector<Element> cells;
+    s::vector<ft::Element> cells;
     for (char c : line) {
-      Element cell;
+      ft::Element cell;
       switch (c) {
-      case 'W': cell = text("W") | color(Color::GrayLight);            break;
-      case '.': cell = text(".");                                       break;
-      case 'P': cell = text("P") | color(Color::Green)  | bold;        break;
-      case 'G': cell = text("G") | color(Color::Yellow);               break;
-      case 'B': cell = text("B") | color(Color::Blue);                 break;
-      case 'Q': cell = text("Q") | color(Color::GreenLight) | bold;    break;
-      case 'C': cell = text("C") | color(Color::Green);                break;
-      default:  cell = text(" ");                                       break;
+      case 'W': cell = ft::text("W") | ft::color(ft::Color::GrayLight);
+
+      break; case '.': cell = ft::text(".");
+
+      break; case 'P':
+        cell = ft::text("P") | ft::color(ft::Color::Green) | ft::bold;
+
+      break; case 'G': cell = ft::text("G") | ft::color(ft::Color::Yellow);
+
+      break; case 'B': cell = ft::text("B") | ft::color(ft::Color::Blue);
+
+      break; case 'Q':
+        cell = ft::text("Q") | ft::color(ft::Color::GreenLight) | ft::bold;
+
+      break; case 'C': cell = ft::text("C") | ft::color(ft::Color::Green);
+
+      default: cell = ft::text(" ");
       }
       cells.push_back(cell);
     }
-    rows.push_back(hbox(cells));
+    rows.push_back(ft::hbox(cells));
   }
-  return vbox(rows);
+  return ft::vbox(rows);
 }
 
 int main(int argc, char* argv[]){
@@ -52,56 +61,58 @@ int main(int argc, char* argv[]){
     return 1;
   }
 
-  fs::path source(argv[1]);
-  g::SokobanBoard game(source);
+  sf::path source(argv[1]);
+  so::SokobanBoard game(source);
   int move_count = 0;
 
-  auto screen = App::Fullscreen();
+  auto screen = ft::App::Fullscreen();
 
-  auto component = Renderer([&] {
+  auto component = ft::Renderer([&] {
     if (game.is_terminal()) {
-      return vbox({
-        text("Sokoban") | bold | center,
-        separator(),
-        render_board(game) | border | center,
-        separator(),
-        text("Puzzle solved!") | bold | color(Color::Green) | center,
-        text("Press Q to exit") | dim | center,
+      return ft::vbox({
+        ft::text("Sokoban") | ft::bold | ft::center,
+        ft::separator(),
+        render_board(game) | ft::border | ft::center,
+        ft::separator(),
+        ft::text("Puzzle solved!")
+          | ft::bold | ft::color(ft::Color::Green) | ft::center,
+        ft::text("Press Q to exit") | ft::dim | ft::center,
       });
     }
-    return vbox({
-      text("Sokoban") | bold | center,
-      separator(),
-      render_board(game) | border | center,
-      separator(),
-      text("WASD / arrows: move   B: undo   Q: quit") | dim | center,
+    return ft::vbox({
+      ft::text("Sokoban") | ft::bold | ft::center,
+      ft::separator(),
+      render_board(game) | ft::border | ft::center,
+      ft::separator(),
+      ft::text("WASD / arrows: move   B: undo   Q: quit") | ft::dim | ft::center,
     });
   });
 
-  component |= CatchEvent([&](Event event) -> bool {
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
+  component |= ft::CatchEvent([&](ft::Event event) -> bool {
+    if (event == ft::Event::Character('q') or
+        event == ft::Event::Character('Q')) {
       screen.ExitLoopClosure()();
       return true;
     }
     if (game.is_terminal()) return false;
 
-    if (event == Event::Character('w') || event == Event::ArrowUp) {
-      if (game.play(g::NORTH)) move_count++;
+    if (event == ft::Event::Character('w') or event == ft::Event::ArrowUp) {
+      if (game.play(so::NORTH)) move_count++;
       return true;
     }
-    if (event == Event::Character('s') || event == Event::ArrowDown) {
-      if (game.play(g::SOUTH)) move_count++;
+    if (event == ft::Event::Character('s') or event == ft::Event::ArrowDown) {
+      if (game.play(so::SOUTH)) move_count++;
       return true;
     }
-    if (event == Event::Character('a') || event == Event::ArrowLeft) {
-      if (game.play(g::WEST)) move_count++;
+    if (event == ft::Event::Character('a') or event == ft::Event::ArrowLeft) {
+      if (game.play(so::WEST)) move_count++;
       return true;
     }
-    if (event == Event::Character('d') || event == Event::ArrowRight) {
-      if (game.play(g::EAST)) move_count++;
+    if (event == ft::Event::Character('d') or event == ft::Event::ArrowRight) {
+      if (game.play(so::EAST)) move_count++;
       return true;
     }
-    if (event == Event::Character('b') && move_count > 0) {
+    if (event == ft::Event::Character('b') and move_count > 0) {
       game.backtrack(1);
       move_count--;
       return true;

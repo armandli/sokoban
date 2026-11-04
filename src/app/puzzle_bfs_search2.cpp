@@ -13,16 +13,16 @@
 
 #include <iostream>
 
-namespace s = std;
-namespace fs = std::filesystem;
-namespace g = sokoban;
+namespace s  = std;
+namespace sf = std::filesystem;
+namespace so = sokoban;
 
 struct Node {
-  g::BoardState state;
-  int           count;
+  so::BoardState state;
+  int            count;
 
   Node() = default;
-  Node(const g::BoardState& st, int c): state(st), count(c) {}
+  Node(const so::BoardState& st, int c): state(st), count(c) {}
 };
 
 auto NodeCmp = [](const Node& a, const Node& b){
@@ -31,12 +31,12 @@ auto NodeCmp = [](const Node& a, const Node& b){
 };
 
 // using box move as node instead of player move
-int bfs(const fs::path& source){
-  g::SokobanBoard game(source, true);
+int bfs(const sf::path& source){
+  so::SokobanBoard game(source, true);
   s::priority_queue<Node, s::vector<Node>, decltype(NodeCmp)> q(NodeCmp);
   q.push(Node(game.state(), 0));
 
-  s::set<s::pair<g::BoardState, int>> visited;
+  s::set<s::pair<so::BoardState, int>> visited;
   visited.insert(s::make_pair(game.state(), 0));
 
   int c = 0;
@@ -56,33 +56,32 @@ int bfs(const fs::path& source){
       return node.count;
     }
 
-    for (const g::Pt& box : node.state.boxes){
-      for (const g::Dr& dir : g::DIRECTIONS){
+    for (const so::Pt& box : node.state.boxes){
+      for (const so::Dr& dir : so::DIRECTIONS){
         game.set_state(node.state);
 
         if (not game.is_box_movable(box, dir)){
           continue;
         }
 
-        g::Dr oppo_dir = g::opposite(dir);
-        s::optional<s::vector<g::Dr>> steps = g::min_player_step(game, box + oppo_dir);
+        so::Dr oppo_dir = so::opposite(dir);
+        s::optional<s::vector<so::Dr>> steps =
+          so::min_player_step(game, box + oppo_dir);
         if (not steps.has_value()){
           continue;
         }
 
-        for (const g::Dr& d : steps.value()){
+        for (const so::Dr& d : steps.value()){
           game.play(d);
         }
         game.play(dir);
 
-        g::BoardState st = game.state();
-        if (visited.find(s::make_pair(st, node.count+steps.value().size()+1)) != visited.end()){
-          continue;
-        }
+        so::BoardState st = game.state();
+        auto key = s::make_pair(st, node.count + (int)steps.value().size() + 1);
+        if (visited.find(key) != visited.end()) continue;
 
-        visited.insert(s::make_pair(st, node.count+steps.value().size()+1));
-
-        q.push(Node(st, node.count + steps.value().size() + 1));
+        visited.insert(key);
+        q.push(Node(st, node.count + (int)steps.value().size() + 1));
       }
     }
   }
@@ -96,7 +95,7 @@ int main(int argc, char* argv[]){
     return 1;
   }
 
-  fs::path source(argv[1]);
+  sf::path source(argv[1]);
   int steps = bfs(source);
 
   s::cout << "solution in " << steps << s::endl;

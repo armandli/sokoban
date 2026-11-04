@@ -1,5 +1,5 @@
-#ifndef GAME_BASE
-#define GAME_BASE
+#ifndef GAME_BASE_H
+#define GAME_BASE_H
 
 #include <type_alias.h>
 
@@ -25,6 +25,7 @@ constexpr size_t hash(const Dr& d){
 constexpr bool operator==(const Dr& a, const Dr& b){
   return a.x == b.x and a.y == b.y;
 }
+
 constexpr bool operator!=(const Dr& a, const Dr& b){
   return not operator==(a, b);
 }
@@ -43,31 +44,31 @@ constexpr s::array<Dr, 4> DIRECTIONS = {
 
 constexpr uint16_t index(const Dr& d){
   switch (hash(d)){
-  break; case hash(NORTH): return 0;
+  case hash(NORTH): return 0;
   break; case hash(SOUTH): return 1;
   break; case hash(EAST):  return 2;
   break; case hash(WEST):  return 3;
-  break; default: assert(false);
+  default: assert(false);
   }
 }
 
 constexpr Dr opposite(const Dr& d){
   switch (hash(d)){
-  break; case hash(NORTH): return SOUTH;
+  case hash(NORTH): return SOUTH;
   break; case hash(SOUTH): return NORTH;
   break; case hash(EAST):  return WEST;
   break; case hash(WEST):  return EAST;
-  break; default: assert(false);
+  default: assert(false);
   }
 }
 
 s::ostream& operator<<(s::ostream& out, const Dr& d){
   switch (index(d)){
-  break; case 0: out << "NORTH";
+  case 0: out << "NORTH";
   break; case 1: out << "SOUTH";
   break; case 2: out << "EAST";
   break; case 3: out << "WEST";
-  break; default: assert(false);
+  default: assert(false);
   }
   return out;
 }
@@ -117,7 +118,7 @@ s::ostream& operator<<(s::ostream& out, const Pt& pt){
   return out;
 }
 
-} // sokoban
+} // namespace sokoban
 
 namespace std {
 template <>
@@ -126,6 +127,6 @@ struct hash<sokoban::Pt> {
     return sokoban::hash(p);
   }
 };
-} // std
+} // namespace std
 
-#endif//GAME_BASE
+#endif // GAME_BASE_H

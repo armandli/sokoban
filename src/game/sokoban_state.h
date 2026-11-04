@@ -1,5 +1,5 @@
-#ifndef SOKOBAN_STATE
-#define SOKOBAN_STATE
+#ifndef SOKOBAN_STATE_H
+#define SOKOBAN_STATE_H
 
 #include <type_alias.h>
 #include <game_base.h>
@@ -53,7 +53,7 @@ size_t fnv1(const BoardState& st){
   return h;
 }
 
-} // sokoban
+} // namespace sokoban
 
 namespace std {
 template <>
@@ -62,7 +62,6 @@ struct hash<sokoban::BoardState> {
     return sokoban::fnv1(st);
   }
 };
-} // std
+} // namespace std
 
-
-#endif//SOKOBAN_STATE
+#endif // SOKOBAN_STATE_H

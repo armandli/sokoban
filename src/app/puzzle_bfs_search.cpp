@@ -11,14 +11,14 @@
 
 #include <iostream>
 
-namespace s = std;
-namespace fs = std::filesystem;
-namespace g = sokoban;
+namespace s  = std;
+namespace sf = std::filesystem;
+namespace so = sokoban;
 
-int bfs(const fs::path& source){
-  g::SokobanBoard game(source, true);
-  uset<g::BoardState> visited;
-  s::queue<s::pair<g::BoardState, int>> q;
+int bfs(const sf::path& source){
+  so::SokobanBoard game(source, true);
+  uset<so::BoardState> visited;
+  s::queue<s::pair<so::BoardState, int>> q;
   q.push(s::make_pair(game.state(), 0));
   visited.insert(game.state());
 
@@ -32,13 +32,13 @@ int bfs(const fs::path& source){
 
     if (game.is_terminal()) return count;
 
-    for (g::Dr dr : g::DIRECTIONS){
+    for (so::Dr dr : so::DIRECTIONS){
       game.set_state(state);
       bool diff = game.play(dr);
       if (not diff)
         continue;
-      
-      g::BoardState st = game.state();
+
+      so::BoardState st = game.state();
       if (visited.find(st) != visited.end()) continue;
 
       visited.insert(st);
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
     return 1;
   }
 
-  fs::path source(argv[1]);
+  sf::path source(argv[1]);
   int steps = bfs(source);
 
   s::cout << "solution in " << steps << s::endl;

@@ -1,5 +1,5 @@
-#ifndef SOKOBAN_HEURISTIC
-#define SOKOBAN_HEURISTIC
+#ifndef SOKOBAN_HEURISTIC_H
+#define SOKOBAN_HEURISTIC_H
 
 #include <game_base.h>
 #include <sokoban_board.h>
@@ -24,7 +24,8 @@ bool is_stuck(SokobanBoard& board, const Pt& box){
     Pt dest = box + d;
     Pt src  = box + od;
 
-    if (board.mSpace.find(dest) != board.mSpace.end() and board.mWalls.find(src) == board.mWalls.end()){
+    if (board.mSpace.find(dest) != board.mSpace.end() and
+        board.mWalls.find(src) == board.mWalls.end()){
       stuck = false;
       break;
     }
@@ -72,7 +73,7 @@ s::optional<s::vector<Dr>> min_player_step(SokobanBoard& board, const Pt& dest){
   while (not q.empty()){
     auto [loc, actions] = q.front(); q.pop();
 
-    if (loc == dest) return actions; 
+    if (loc == dest) return actions;
 
     for (const Dr& dir : DIRECTIONS){
       Pt new_loc = loc + dir;
@@ -144,7 +145,7 @@ int heuristic2(SokobanBoard& board){
   return sum * -1; // better when sum is smaller
 }
 
-// if box stuck, add arbiturary large number,
+// if box stuck, add arbitrary large number,
 // if not stuck, add negative manhattan distance from box to closest goal
 int heuristic3(SokobanBoard& board){
   int sum = 0;
@@ -176,6 +177,6 @@ int heuristic4(SokobanBoard& board){
   return sum * -1;
 }
 
-} // sokoban
+} // namespace sokoban
 
-#endif//SOKOBAN_HEURISTIC
+#endif // SOKOBAN_HEURISTIC_H

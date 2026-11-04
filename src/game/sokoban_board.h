@@ -1,5 +1,5 @@
-#ifndef SOKOBAN_BOARD
-#define SOKOBAN_BOARD
+#ifndef SOKOBAN_BOARD_H
+#define SOKOBAN_BOARD_H
 
 #include <type_alias.h>
 #include <game_base.h>
@@ -8,39 +8,25 @@
 #include <cassert>
 #include <stdexcept>
 #include <format>
+#include <optional>
 #include <vector>
 #include <filesystem>
 #include <fstream>
 
 namespace s = std;
-namespace fs = std::filesystem;
+namespace sf = std::filesystem;
 
 namespace sokoban {
 
 using History = s::vector<BoardState>;
 
-class SokobanBoard {
-  uset<Pt>   mSpace;
-  uset<Pt>   mWalls;
-  uset<Pt>   mGoals;
-  BoardState mState;
-  Pt         mMaxPt;
-  History    mHistory;
-  bool       mDisableHistory;
-
-  //TODO: think of a better way to declare these friends
-  friend bool is_stuck(SokobanBoard&, const Pt&);
-  friend int min_box_step(SokobanBoard&, const Pt&);
-  friend s::optional<s::vector<Dr>> min_player_step(SokobanBoard&, const Pt&);
-  friend uset<Pt> player_reach(SokobanBoard&);
-  friend int heuristic1(SokobanBoard&);
-  friend int heuristic2(SokobanBoard&);
-  friend int heuristic3(SokobanBoard&);
-  friend int heuristic4(SokobanBoard&);
-public:
-  SokobanBoard(const fs::path& bc_path, bool disable_history=false): mMaxPt(0,0), mDisableHistory(disable_history) {
+struct SokobanBoard {
+  SokobanBoard(const sf::path& bc_path, bool disable_history = false)
+  : mMaxPt(0, 0), mDisableHistory(disable_history) {
     s::ifstream source_file(bc_path.c_str());
-    if (not source_file.is_open()) throw s::runtime_error(s::format("cannot open file {}", bc_path.native()));
+    if (not source_file.is_open())
+      throw s::runtime_error(
+        s::format("cannot open file {}", bc_path.native()));
 
     s::string line;
     sint row_id = 0;
@@ -49,43 +35,51 @@ public:
       for (char c : line){
         switch (c){
         // empty space
-        break; case '.': {
+        case '.': {
           mSpace.insert(Pt(row_id, col_id));
         }
+
         // wall
         break; case 'W': {
           mWalls.insert(Pt(row_id, col_id));
         }
+
         // player
         break; case 'P': {
           mSpace.insert(Pt(row_id, col_id));
           mState.player = Pt(row_id, col_id);
         }
+
         // goal
         break; case 'G': {
           mSpace.insert(Pt(row_id, col_id));
           mGoals.insert(Pt(row_id, col_id));
         }
+
         // box
         break; case 'B': {
           mSpace.insert(Pt(row_id, col_id));
           mState.boxes.insert(Pt(row_id, col_id));
         }
+
         // player on goal
         break; case 'Q': {
           mSpace.insert(Pt(row_id, col_id));
           mState.player = Pt(row_id, col_id);
           mGoals.insert(Pt(row_id, col_id));
         }
+
         // box on goal
         break; case 'C': {
           mSpace.insert(Pt(row_id, col_id));
           mState.boxes.insert(Pt(row_id, col_id));
           mGoals.insert(Pt(row_id, col_id));
         }
+
         // not defined
         break; case ' ':;
-        break; default: assert(false);
+
+        default: assert(false);
         }
 
         col_id++;
@@ -111,7 +105,9 @@ public:
       return true;
     } else {
       Pt nnp = np + dr;
-      if (mSpace.find(nnp) == mSpace.end() or mWalls.find(nnp) != mWalls.end() or mState.boxes.find(nnp) != mState.boxes.end())
+      if (mSpace.find(nnp) == mSpace.end() or
+          mWalls.find(nnp) != mWalls.end() or
+          mState.boxes.find(nnp) != mState.boxes.end())
         return false;
       if (not mDisableHistory)
         mHistory.push_back(mState);
@@ -144,7 +140,7 @@ public:
 
   void backtrack(int steps){
     assert(mDisableHistory == false);
-    assert(steps >= 0 and steps < mHistory.size());
+    assert(steps >= 0 and steps < (int)mHistory.size());
 
     if (steps == 0) return;
 
@@ -186,8 +182,27 @@ public:
       out << '\n';
     }
   }
+
+private:
+  //TODO: think of a better way to declare these friends
+  friend bool is_stuck(SokobanBoard&, const Pt&);
+  friend int min_box_step(SokobanBoard&, const Pt&);
+  friend s::optional<s::vector<Dr>> min_player_step(SokobanBoard&, const Pt&);
+  friend uset<Pt> player_reach(SokobanBoard&);
+  friend int heuristic1(SokobanBoard&);
+  friend int heuristic2(SokobanBoard&);
+  friend int heuristic3(SokobanBoard&);
+  friend int heuristic4(SokobanBoard&);
+
+  uset<Pt>   mSpace;
+  uset<Pt>   mWalls;
+  uset<Pt>   mGoals;
+  BoardState mState;
+  Pt         mMaxPt;
+  History    mHistory;
+  bool       mDisableHistory;
 };
 
-} // sokoban
+} // namespace sokoban
 
-#endif//SOKOBAN_BOARD
+#endif // SOKOBAN_BOARD_H
