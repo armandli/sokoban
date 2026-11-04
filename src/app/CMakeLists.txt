@@ -5,7 +5,7 @@ set_property(TARGET puzzle_play PROPERTY CXX_STANDARD 23)
 
 target_link_libraries(puzzle_play util)
 target_link_libraries(puzzle_play game)
-target_link_libraries(puzzle_play ${CURSES_LIBRARY})
+target_link_libraries(puzzle_play ftxui::screen ftxui::dom ftxui::component)
 
 # puzzle bfs search
 add_executable(puzzle_bfs_search puzzle_bfs_search.cpp)
