@@ -1,7 +1,12 @@
 #!/bin/sh
+# Configure (if needed) and build in Release mode.
 
-cd build
+set -e
+cd "$(dirname "$0")/.."
 
-cmake --build . --config Release
+if [ ! -f build/CMakeCache.txt ]; then
+  sh bin/rebuild.sh
+  exit 0
+fi
 
-cd ..
+cmake --build build --config Release -j"$(nproc)"

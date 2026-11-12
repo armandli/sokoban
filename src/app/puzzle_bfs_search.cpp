@@ -46,7 +46,7 @@ int bfs(const sf::path& source){
     }
   }
 
-  assert(false);
+  return -1; // unsolvable (falling off a non-void function is UB under NDEBUG)
 }
 
 int main(int argc, char* argv[]){
