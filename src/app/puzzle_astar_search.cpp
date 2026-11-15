@@ -19,25 +19,21 @@ namespace so = sokoban;
 struct Node {
   so::BoardState state;
   int            count;
+  int            value; // h(state) - count, larger is better
 
   Node() = default;
-  Node(const so::BoardState& st, int c): state(st), count(c) {}
+  Node(const so::BoardState& st, int c, int v): state(st), count(c), value(v) {}
 };
 
 template <so::Heuristic H>
 int astar(so::SokobanBoard& game, H& h){
   uset<so::BoardState> visited;
 
-  auto cmp = [&game, &h](const Node& a, const Node& b){
-    game.set_state(a.state);
-    int va = h(game) - a.count;
-    game.set_state(b.state);
-    int vb = h(game) - b.count;
-    return va < vb;
-  };
+  // heuristic is evaluated once per node, not on every heap comparison
+  auto cmp = [](const Node& a, const Node& b){ return a.value < b.value; };
 
   s::priority_queue<Node, s::vector<Node>, decltype(cmp)> q(cmp);
-  q.push(Node(game.state(), 0));
+  q.push(Node(game.state(), 0, h(game)));
   visited.insert(game.state());
 
   int c = 0;
@@ -66,11 +62,11 @@ int astar(so::SokobanBoard& game, H& h){
       if (visited.find(st) != visited.end()) continue;
 
       visited.insert(st);
-      q.push(Node(st, node.count + 1));
+      q.push(Node(st, node.count + 1, h(game) - (node.count + 1)));
     }
   }
 
-  assert(false);
+  return -1; // unsolvable (falling off a non-void function is UB under NDEBUG)
 }
 
 int main(int argc, char* argv[]){

@@ -50,6 +50,7 @@ constexpr uint16_t index(const Dr& d){
   break; case hash(WEST):  return 3;
   default: assert(false);
   }
+  return 0;
 }
 
 constexpr Dr opposite(const Dr& d){
@@ -60,6 +61,7 @@ constexpr Dr opposite(const Dr& d){
   break; case hash(WEST):  return EAST;
   default: assert(false);
   }
+  return d;
 }
 
 inline s::ostream& operator<<(s::ostream& out, const Dr& d){
@@ -68,7 +70,7 @@ inline s::ostream& operator<<(s::ostream& out, const Dr& d){
   break; case 1: out << "SOUTH";
   break; case 2: out << "EAST";
   break; case 3: out << "WEST";
-  default: assert(false);
+  break; default: assert(false);
   }
   return out;
 }

@@ -9,7 +9,7 @@
 
 #include <utility>
 #include <queue>
-#include <set>
+#include <unordered_map>
 
 #include <iostream>
 
@@ -20,32 +20,32 @@ namespace so = sokoban;
 struct Node {
   so::BoardState state;
   int            count;
+  int            value; // priority, larger is better
 
   Node() = default;
-  Node(const so::BoardState& st, int c): state(st), count(c) {}
+  Node(const so::BoardState& st, int c, int v = 0)
+  : state(st), count(c), value(v) {}
 };
 
 // using box move as node instead of player move
 template <so::Heuristic H>
 int astar(so::SokobanBoard& game, H& h){
-  auto cmp = [&game, &h](const Node& a, const Node& b){
-    game.set_state(a.state);
-    int va = h(game) - a.count;
-    game.set_state(b.state);
-    int vb = h(game) - b.count;
-    return va < vb;
-  };
+  // heuristic is evaluated once per node, not on every heap comparison
+  auto cmp = [](const Node& a, const Node& b){ return a.value < b.value; };
 
   s::priority_queue<Node, s::vector<Node>, decltype(cmp)> q(cmp);
-  q.push(Node(game.state(), 0));
+  q.push(Node(game.state(), 0, h(game)));
 
-  s::set<s::pair<so::BoardState, int>> visited;
-  visited.insert(s::make_pair(game.state(), 0));
+  // best known cost per state; keying on (state, cost) never deduplicated
+  s::unordered_map<so::BoardState, int> visited;
+  visited[game.state()] = 0;
 
   int c = 0;
 
   while (not q.empty()){
     Node node = q.top(); q.pop();
+
+    if (visited[node.state] < node.count) continue; // stale entry
 
     c++;
 
@@ -80,15 +80,16 @@ int astar(so::SokobanBoard& game, H& h){
         game.play(dir);
 
         so::BoardState st = game.state();
-        auto key = s::make_pair(st, node.count + (int)steps.value().size() + 1);
-        if (visited.find(key) != visited.end()) continue;
+        int ncount = node.count + (int)steps.value().size() + 1;
+        auto it = visited.find(st);
+        if (it != visited.end() and it->second <= ncount) continue;
 
-        visited.insert(key);
-        q.push(Node(st, node.count + (int)steps.value().size() + 1));
+        visited[st] = ncount;
+        q.push(Node(st, ncount, h(game) - ncount));
       }
     }
   }
-  assert(false);
+  return -1; // unsolvable (falling off a non-void function is UB under NDEBUG)
 }
 
 int main(int argc, char* argv[]){

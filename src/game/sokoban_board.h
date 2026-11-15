@@ -76,10 +76,13 @@ struct SokobanBoard {
           mGoals.insert(Pt(row_id, col_id));
         }
 
-        // not defined
-        break; case ' ':;
+        // not defined (outside the level)
+        break; case ' ':
+        break; case '\r': continue;
 
-        default: assert(false);
+        break; default:
+          throw s::runtime_error(
+            s::format("unexpected character '{}' in {}", c, bc_path.native()));
         }
 
         col_id++;
@@ -116,20 +119,44 @@ struct SokobanBoard {
     return gs;
   }
 
-  // Reverse move: pull box from `box` in direction `dir`
-  // (box moves from `box` to `box + opposite(dir)`).
-  // Player is placed at `box` (the old box position).
+  // Reverse move (exact inverse of a push): the player stands at
+  // `box + dir`, steps to `box + 2*dir` and drags the box to `box + dir`.
+  // Requires `box + dir` reachable by the player and `box + 2*dir` free.
   // Used to generate training states via backward random walks.
-  // Returns false if the destination is a wall, out of bounds, or occupied.
+  // Returns false (state unchanged) if the pull is illegal.
   bool pull_box(const Pt& box, const Dr& dir) {
     assert(mState.boxes.find(box) != mState.boxes.end());
-    Pt dest = box + opposite(dir);
-    if (mSpace.find(dest) == mSpace.end())             return false;
-    if (mState.boxes.find(dest) != mState.boxes.end()) return false;
+    Pt dest  = box + dir;
+    Pt retreat = dest + dir;
+    if (mSpace.find(dest) == mSpace.end())                return false;
+    if (mState.boxes.find(dest) != mState.boxes.end())    return false;
+    if (mSpace.find(retreat) == mSpace.end())             return false;
+    if (mState.boxes.find(retreat) != mState.boxes.end()) return false;
+    if (not player_can_reach(dest))                       return false;
     mState.boxes.erase(box);
     mState.boxes.insert(dest);
-    mState.player = box;
+    mState.player = retreat;
     return true;
+  }
+
+  // BFS over free floor from the player position.
+  bool player_can_reach(const Pt& dest) const {
+    if (mState.player == dest) return true;
+    uset<Pt> seen{mState.player};
+    s::vector<Pt> stack{mState.player};
+    while (not stack.empty()){
+      Pt p = stack.back(); stack.pop_back();
+      for (const Dr& d : DIRECTIONS){
+        Pt n = p + d;
+        if (seen.contains(n))                         continue;
+        if (mSpace.find(n) == mSpace.end())           continue;
+        if (mState.boxes.find(n) != mState.boxes.end()) continue;
+        if (n == dest) return true;
+        seen.insert(n);
+        stack.push_back(n);
+      }
+    }
+    return false;
   }
 
   bool play(const Dr& dr){

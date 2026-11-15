@@ -4,6 +4,9 @@
 #include <type_alias.h>
 #include <game_base.h>
 
+#include <algorithm>
+#include <vector>
+
 namespace s = std;
 
 namespace sokoban {
@@ -32,13 +35,13 @@ inline bool operator<(const BoardState& a, const BoardState& b){
   if (a.boxes.size() < b.boxes.size())      return true;
   else if (a.boxes.size() > b.boxes.size()) return false;
 
-  for (auto itera = s::begin(a.boxes), iterb = s::begin(b.boxes);
-       itera != s::end(a.boxes) and iterb != s::end(b.boxes);
-       ++itera, ++iterb){
-    if (*itera < *iterb)      return true;
-    else if (*iterb < *itera) return false;
-  }
-  return false;
+  // unordered_set iteration order differs between equal sets, so compare
+  // the sorted box lists to get a strict weak ordering consistent with ==
+  s::vector<Pt> va(a.boxes.begin(), a.boxes.end());
+  s::vector<Pt> vb(b.boxes.begin(), b.boxes.end());
+  s::sort(va.begin(), va.end());
+  s::sort(vb.begin(), vb.end());
+  return s::lexicographical_compare(va.begin(), va.end(), vb.begin(), vb.end());
 }
 
 inline size_t fnv1(const BoardState& st){

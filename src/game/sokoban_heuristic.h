@@ -25,11 +25,11 @@ concept Heuristic =
     s::invocable<H&, SokobanBoard&> and
     s::same_as<s::invoke_result_t<H&, SokobanBoard&>, int>;
 
-int mandist(const Pt& a, const Pt& b){
+inline int mandist(const Pt& a, const Pt& b){
   return abs(a.x - b.x) + abs(a.y - b.y);
 }
 
-bool is_stuck(SokobanBoard& board, const Pt& box){
+inline bool is_stuck(SokobanBoard& board, const Pt& box){
   bool stuck = true;
   for (const Dr& d : DIRECTIONS){
     Dr od = opposite(d);
@@ -37,7 +37,7 @@ bool is_stuck(SokobanBoard& board, const Pt& box){
     Pt src  = box + od;
 
     if (board.mSpace.find(dest) != board.mSpace.end() and
-        board.mWalls.find(src) == board.mWalls.end()){
+        board.mSpace.find(src)  != board.mSpace.end()){
       stuck = false;
       break;
     }
@@ -45,7 +45,7 @@ bool is_stuck(SokobanBoard& board, const Pt& box){
   return stuck;
 }
 
-int min_box_step(SokobanBoard& board, const Pt& box){
+inline int min_box_step(SokobanBoard& board, const Pt& box){
   assert(board.mState.boxes.find(box) != board.mState.boxes.end());
 
   if (is_stuck(board, box)) return -1;
@@ -75,7 +75,7 @@ int min_box_step(SokobanBoard& board, const Pt& box){
 }
 
 // minimum steps player need to take to get to dest
-s::optional<s::vector<Dr>> min_player_step(SokobanBoard& board, const Pt& dest){
+inline s::optional<s::vector<Dr>> min_player_step(SokobanBoard& board, const Pt& dest){
   assert(board.mSpace.find(dest) != board.mSpace.end());
 
   uset<Pt> visited;
@@ -105,7 +105,7 @@ s::optional<s::vector<Dr>> min_player_step(SokobanBoard& board, const Pt& dest){
   return s::nullopt;
 }
 
-uset<Pt> player_reach(SokobanBoard& board){
+inline uset<Pt> player_reach(SokobanBoard& board){
   uset<Pt> span;
   s::queue<Pt> q;
   q.push(board.mState.player);
@@ -129,7 +129,7 @@ uset<Pt> player_reach(SokobanBoard& board){
 // heuristic should return larger value when more favored
 
 // count number of goals reached with boxes
-int heuristic1(SokobanBoard& board){
+inline int heuristic1(SokobanBoard& board){
   int sum = 0;
   for (const Pt& box : board.mState.boxes){
     bool on_goal = false;
@@ -144,7 +144,7 @@ int heuristic1(SokobanBoard& board){
 }
 
 // count negative distance between box and its closest goal
-int heuristic2(SokobanBoard& board){
+inline int heuristic2(SokobanBoard& board){
   int sum = 0;
   for (const Pt& box : board.mState.boxes){
     int min_dist = 0x7F7F7F7F;
@@ -159,11 +159,11 @@ int heuristic2(SokobanBoard& board){
 
 // if box stuck, add arbitrary large number,
 // if not stuck, add negative manhattan distance from box to closest goal
-int heuristic3(SokobanBoard& board){
+inline int heuristic3(SokobanBoard& board){
   int sum = 0;
   for (const Pt& box : board.mState.boxes){
-    if (is_stuck(board, box)){
-      sum += 0x7F7F7F7F;
+    if (is_stuck(board, box) and board.mGoals.find(box) == board.mGoals.end()){
+      return -(int)0x7F7F7F7F; // deadlock; summing sentinels overflowed int
     } else {
       int min_dist = 0x7F7F7F7F;
       for (const Pt& goal : board.mGoals){
@@ -177,12 +177,12 @@ int heuristic3(SokobanBoard& board){
 }
 
 // bfs search min cost box distance sum
-int heuristic4(SokobanBoard& board){
+inline int heuristic4(SokobanBoard& board){
   int sum = 0;
   for (const Pt& box : board.mState.boxes){
     int min_dist = min_box_step(board, box);
     if (min_dist == -1)
-      sum += 0x7F7F7F7F;
+      return -(int)0x7F7F7F7F; // deadlock; summing sentinels overflowed int
     else
       sum += min_dist;
   }
@@ -232,6 +232,7 @@ struct Heuristic5 {
   int operator()(SokobanBoard& board){
     s::vector<Pt> boxes(board.mState.boxes.begin(), board.mState.boxes.end());
     int n = (int)boxes.size();
+    if (n != (int)goals.size()) return -(int)0x7F7F7F7F; // malformed level
 
     s::vector<s::vector<int>> cost(n, s::vector<int>(n, 0x7F7F7F7F));
     for (int i = 0; i < n; i++){
